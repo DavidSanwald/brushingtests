@@ -1,20 +1,10 @@
-class Point {
-  constructor ({ x = 0, y = 0 }) {
-    this.x = x
-    this.y = y
-  }
-
+const createPoint = ({ x, y }) => ({
+  x,
+  y,
   value () {
-    return {
-      x: this.x,
-      y: this.y
-    }
+    return { x, y }
   }
-
-  toArray () {
-    return [this.x, this.y]
-  }
-}
+})
 export default function localPoint (node, event) {
   // called with no args
   if (!node) return
@@ -47,15 +37,14 @@ export default function localPoint (node, event) {
     point.x = clientX
     point.y = clientY
     point = point.matrixTransform(node.getScreenCTM().inverse())
-    return new Point({
-      x: point.x,
-      y: point.y
+    return createPoint({
+      point
     })
   }
 
   // fallback to calculating position from non-svg dom node
   const rect = node.getBoundingClientRect()
-  return new Point({
+  return createPoint({
     x: clientX - rect.left - node.clientLeft,
     y: clientY - rect.top - node.clientTop
   })

@@ -1,23 +1,47 @@
-import React, { useState, useReducer, useEffect, useRef } from 'react'
+import React, {
+  useState,
+  useReducer,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo
+} from 'react'
 import Group from './Group'
-import { map } from 'ramda'
 import useDims from './useDims'
 import bubbleData from './bubbleData'
 import { linear } from './scales'
 import { keyExtent, useExtent } from './transformationHelpers'
-import { compose, prop, applySpec, evolve } from 'ramda'
-import { getRandomColor } from './colors'
+import {
+  compose,
+  prop,
+  applySpec,
+  evolve,
+  useWith,
+  lte,
+  map,
+  where,
+  ifElse,
+  gte,
+  both,
+  gt,
+  tap
+} from 'ramda'
+import { getRandomColor, colors } from './colors'
+import { pred } from './helpers'
 import { getData } from './dataGens'
+import useBrush from './useBrush'
 import localPoint from './localPoint'
 import XAxis from './XAxis.js'
 import YAxis from './YAxis.js'
 import Circle from './Circle'
+import chance from 'chance'
+
+const peek = tap(x => console.log(x))
 
 const width = 900
 const height = 600
 const xKey = 'x'
 const yKey = 'y'
-
 const getCoordinates = (xKey, yKey) =>
   applySpec({
     projection: {
@@ -45,154 +69,87 @@ const useData = (generator, number = 20) => {
   const genData = () => setData(generator(number, Math.random()))
   return [data, genData]
 }
-const getBrushArea = ({
-  startLocX,
-  startLocY,
-  currentLocX,
-  currentLocY,
-  brushArea
-}) => {
-  return {
-    bottom: Math.max(startLocY, currentLocY),
-    right: Math.max(startLocX, currentLocX),
-    left: Math.min(startLocX, currentLocX),
-    top: Math.min(currentLocY, startLocY)
-  }
-}
-function reducer(state, action) {
-  const { type, payload } = action
-  switch (type) {
-    case 'brushStart':
-      const brushArea = {
-        top: payload.y,
-        left: payload.x,
-        right: payload.x,
-        bottom: payload.y
-      }
-      return {
-        ...state,
-        brushArea,
-        startLocX: payload.x,
-        startLocY: payload.y,
-        isBrushing: true
-      }
-    case 'brushStop':
-      return { ...state, isBrushing: false, startLocX: 0, startLocY: 0 }
-    case 'brushing':
-      const { startLocX, startLocY } = state
-      const { x: currentLocX, y: currentLocY } = payload
-      return {
-        ...state,
-        brushArea: getBrushArea({
-          brushArea: state.brushArea,
-          startLocX,
-          startLocY,
-          currentLocX,
-          currentLocY
-        })
-      }
-    default:
-      throw Error()
-  }
-}
-const initState = {
-  brushArea: { top: 0, right: 0, bottom: 0, left: 0 },
-  startLocX: 0,
-  startLocY: 0,
-  isBrushing: false
-}
+const data = getData(3, Math.random())
+const chance1 = chance('1234')
 
-const useBrush = node => {
-  const [state, dispatch] = useReducer(reducer, initState)
-
-  const onMouseDown = e => {
-    e.persist()
-    const { x, y } = localPoint(node, e).value()
-    dispatch({
-      type: 'brushStart',
-      payload: {
-        x,
-        y
-      }
-    })
-  }
-  const onMouseLeave = e => {
-    dispatch({
-      type: 'brushStop'
-    })
-  }
-  const onMouseUp = e => {
-    dispatch({
-      type: 'brushStop'
-    })
-  }
-
-  const onMouseMove = e => {
-    e.persist()
-    const { x, y } = localPoint(node, e).value()
-    dispatch({
-      type: 'brushing',
-      payload: {
-        x,
-        y
-      }
-    })
-  }
-
-  const {
-    brushArea: { top, right, left, bottom },
-    isBrushing
-  } = state
-
-  const myRect = isBrushing ? (
-    <rect
-      x={left}
-      y={top}
-      width={Math.max(right - left)}
-      height={Math.max(0, bottom - top)}
-      pointerEvents="none"
-      fill={'red'}
-    />
-  ) : null
-  const events = { onMouseDown, onMouseUp, onMouseMove, onMouseLeave }
-  return [myRect, events]
-}
-
-function App() {
+function App () {
   const eventRef = useRef('')
   const { margin, innerHeight, innerWidth } = useDims(width, height)
-  const [data, genData] = useData(getData, 100)
   const xExtent = useExtent('x', data)
   const yExtent = useExtent('y', data)
-  const xScale = linear({ range: [0, innerWidth], domain: padDomain(xExtent) })
-  const yScale = linear({ range: [innerHeight, 0], domain: padDomain(yExtent) })
-  const [brush, events] = useBrush(eventRef.current)
+  const xScale = useMemo(
+    () => linear({ range: [0, innerWidth], domain: padDomain(xExtent) }),
+    [xExtent, innerWidth]
+  )
+  const yScale = useMemo(
+    () => linear({ range: [innerHeight, 0], domain: padDomain(yExtent) }),
+    [innerHeight, yExtent]
+  )
+  const scaleArea = applySpec({
+    top: compose(
+      yScale.invert,
+      prop('top')
+    ),
+    bottom: compose(
+      yScale.invert,
+      prop('bottom')
+    ),
+    left: compose(
+      xScale.invert,
+      prop('left')
+    ),
+    right: compose(
+      xScale.invert,
+      prop('right')
+    )
+  })
+  const [dispatch, area, status, events] = useBrush()
+  const { left, right, top, bottom } = area
+  pred(scaleArea(area))(peek(data[0]))
+  console.log(scaleArea(area))
 
   return (
-    <svg width={width} height={height} pointerEvents="none">
+    <svg width={width} height={height} pointerEvents='none'>
       <Group top={margin.top} left={margin.left}>
         <rect
-          pointerEvents="all"
-          fill="black"
-          opacity="0"
+          pointerEvents='all'
+          fill='black'
+          opacity='0'
           height={innerHeight}
           width={innerWidth}
-          {...events}
           ref={eventRef}
+          onMouseMove={e =>
+            events.onMouseMove(localPoint(eventRef.current, e.nativeEvent))
+          }
+          onMouseDown={e =>
+            events.onMouseDown(localPoint(eventRef.current, e.nativeEvent))
+          }
+          onMouseUp={e =>
+            events.onMouseUp(localPoint(eventRef.current, e.nativeEvent))
+          }
+        />
+        <rect
+          x={left}
+          y={top}
+          width={Math.max(right - left)}
+          height={Math.max(0, bottom - top)}
+          pointerEvents='none'
+          fill={'none'}
+          stroke='red'
+          opacity={0.8}
         />
         {data.map((datum, i) => (
           <Circle
-            {...datum}
             key={i}
             x={xScale(datum.x)}
             y={yScale(datum.y)}
-            size={35}
+            size={10}
             opacity={0.8}
-            fill={'black'}
-            stroke="white"
+            fill={pred(scaleArea(area))(datum) ? 'black' : 'blue'}
+            stroke='white'
+            strokeWidth='2px'
           />
         ))}
-        {brush}
         <XAxis
           xScale={xScale}
           innerWidth={innerWidth}

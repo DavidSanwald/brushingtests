@@ -1,4 +1,4 @@
-import { sample } from 'lodash'
+import { sample, sampleSize } from 'lodash'
 const colors = [
   '#ffd700',
   '#ffb14e',
@@ -10,4 +10,5 @@ const colors = [
 ]
 
 const getRandomColor = () => sample(colors)
-export { colors, getRandomColor }
+const getRandomColors = n => sampleSize(colors, n)
+export { colors, getRandomColor, getRandomColors }

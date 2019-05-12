@@ -20,7 +20,6 @@ const useExtent = (key = 'x', data) =>
       extent,
       pluck(key)
     )(data)
-    console.log(computedExtent)
     return computedExtent
   }, [key, data])
 

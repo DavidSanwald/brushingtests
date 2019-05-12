@@ -1,30 +1,12 @@
 import React, { useState, memo } from 'react'
 import { useSpring, animated } from 'react-spring'
+import { pick } from 'ramda'
 
-const Circle = ({
-  x,
-  y,
-  size,
-  color,
-  onMouseEnter,
-  onMouseMove,
-  onMouseLeave,
-  onClick,
-  ...restProps
-}) => {
-  const [state, setState] = useState(false)
+const Circle = ({ x, y, size, fill }) => {
   const [springProps, set] = useSpring(() => ({ cx: x, cy: y, r: size / 2 }))
   set({ cx: x, cy: y, r: size / 2 })
+  console.log(fill)
 
-  return (
-    <animated.circle
-      onMouseOver={() => setState(true)}
-      onMouseLeave={() => setState(false)}
-      fill={color}
-      onClick={onClick}
-      {...restProps}
-      {...springProps}
-    />
-  )
+  return <animated.circle fill={fill} {...springProps} />
 }
-export default memo(Circle)
+export default Circle
