@@ -105,8 +105,7 @@ function App() {
   })
   const [state, events] = useBrush('drag')
   const { area, dragArea } = state
-  console.log('area:', area)
-  console.log('dragArea:', dragArea)
+  console.log(state.currentStatus)
   const rectArea = state.currentStatus === 'dragging' ? dragArea : area
   const { top, bottom, left, right } = rectArea
 

@@ -1,12 +1,18 @@
 import React, { useReducer, useState, useEffect } from 'react'
 import { pred, isInside, inRange } from './helpers'
-import { not, compose, sort } from 'ramda'
+import { not, compose, sort, cond, equals, always, or } from 'ramda'
 const initBrush = ({ x, y }) => ({
   left: x,
   right: x,
   top: y,
   bottom: y
 })
+const computeNextStatus = cond([
+  [or(equals('brushStart'), equals('brushing')), always('brushing')],
+  [or(equals('dragStart'), equals('dragging')), always('dragging')][
+    (equals('idle'), always('idle'))
+  ]
+])
 const computeBrushArea = ({ startLocX, startLocY, x, y }) => {
   return {
     bottom: Math.max(startLocY, y),
@@ -16,7 +22,6 @@ const computeBrushArea = ({ startLocX, startLocY, x, y }) => {
   }
 }
 const computeDragArea = ({ x, y, startLocX, startLocY, dragArea }) => {
-  console.log('dragArea')
   return {
     bottom: dragArea.bottom + (y - startLocY),
     left: dragArea.left + (x - startLocX),
@@ -34,53 +39,62 @@ const dragReducer = (state, action) => {
       const {
         area: { left, right, top, bottom }
       } = state
-      console.log(state.area)
-      console.log('x: ', x)
-      console.log('y:', y)
       const xRange = sort((a, b) => a - b, [left, right])
       const yRange = sort((a, b) => a - b, [top, bottom])
 
       const isInsideX = xRange[0] < x && x < xRange[1] + 0.00001
       const isInsideY = yRange[0] < y && y < yRange[1] + 0.00001
       const isOutSideAreaClick = !isInsideX || !isInsideY
+      let newStatus = isOutSideAreaClick ? 'brushStart' : 'dragStart'
 
       return {
         ...state,
         startLocX: x,
         startLocY: y,
-        dragArea: isOutSideAreaClick ? null : state.area,
-        currentStatus: isOutSideAreaClick ? 'brushing' : 'dragging'
+        currentStatus: newStatus,
+        area: isOutSideAreaClick
+          ? { top: y, bottom: y, left: x, right: x }
+          : state.area,
+        dragArea: isOutSideAreaClick ? null : state.area
       }
     case 'onMouseMove':
+      console.log(state.currentStatus)
+
+      const nextStatus = computeNextStatus(state.currentStatus)
       return {
         ...state,
         area:
-          state.currentStatus === 'brushing'
+          state.currentStatus === 'brushStart'
             ? computeBrushArea({
-                startLocX: state.startLocX,
-                startLocY: state.startLocY,
-                x,
-                y,
-                area: state.area
-              })
+              startLocX: state.startLocX,
+              startLocY: state.startLocY,
+              x,
+              y,
+              area: state.area
+            })
             : state.area,
         dragArea:
-          state.dragArea && state.currentStatus === 'dragging'
+          state.dragArea && state.currentStatus === 'dragStart'
             ? computeDragArea({
-                x,
-                y,
-                startLocX: state.startLocX,
-                startLocY: state.startLocY,
-                dragArea: state.area
-              })
-            : null
+              x,
+              y,
+              startLocX: state.startLocX,
+              startLocY: state.startLocY,
+              dragArea: state.area
+            })
+            : null,
+        currentStatus: nextStatus
       }
     case 'onMouseUp':
       return {
         ...state,
-        startLocX: 0,
-        startLocY: 0,
-        currentStatus: 'idle'
+        area: state.currentStatus === 'dragging' ? state.dragArea : state.area,
+        currentStatus:
+          state.currentStatus === 'dragging'
+            ? 'dragEnd'
+            : state.currentStatus === 'brushing'
+              ? 'brushEnd'
+              : state.currentStatus
       }
     default:
       throw new Error()
