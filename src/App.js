@@ -72,7 +72,7 @@ const useData = (generator, number = 20) => {
 const data = getData(3, Math.random())
 const chance1 = chance('1234')
 
-function App () {
+function App() {
   const eventRef = useRef('')
   const { margin, innerHeight, innerWidth } = useDims(width, height)
   const xExtent = useExtent('x', data)
@@ -103,18 +103,20 @@ function App () {
       prop('right')
     )
   })
-  const [dispatch, area, status, events] = useBrush()
-  const { left, right, top, bottom } = area
-  pred(scaleArea(area))(peek(data[0]))
-  console.log(scaleArea(area))
+  const [state, events] = useBrush('drag')
+  const { area, dragArea } = state
+  console.log('area:', area)
+  console.log('dragArea:', dragArea)
+  const rectArea = state.currentStatus === 'dragging' ? dragArea : area
+  const { top, bottom, left, right } = rectArea
 
   return (
-    <svg width={width} height={height} pointerEvents='none'>
+    <svg width={width} height={height} pointerEvents="none">
       <Group top={margin.top} left={margin.left}>
         <rect
-          pointerEvents='all'
-          fill='black'
-          opacity='0'
+          pointerEvents="all"
+          fill="black"
+          opacity="0"
           height={innerHeight}
           width={innerWidth}
           ref={eventRef}
@@ -124,18 +126,16 @@ function App () {
           onMouseDown={e =>
             events.onMouseDown(localPoint(eventRef.current, e.nativeEvent))
           }
-          onMouseUp={e =>
-            events.onMouseUp(localPoint(eventRef.current, e.nativeEvent))
-          }
+          onMouseUp={e => events.onMouseUp()}
         />
         <rect
           x={left}
           y={top}
-          width={Math.max(right - left)}
+          width={Math.max(0, right - left)}
           height={Math.max(0, bottom - top)}
-          pointerEvents='none'
+          pointerEvents="none"
           fill={'none'}
-          stroke='red'
+          stroke="red"
           opacity={0.8}
         />
         {data.map((datum, i) => (
@@ -143,11 +143,11 @@ function App () {
             key={i}
             x={xScale(datum.x)}
             y={yScale(datum.y)}
-            size={10}
+            size={45}
             opacity={0.8}
-            fill={pred(scaleArea(area))(datum) ? 'black' : 'blue'}
-            stroke='white'
-            strokeWidth='2px'
+            fill={pred(scaleArea(state.area))(datum) ? 'black' : 'blue'}
+            stroke="white"
+            strokeWidth="2px"
           />
         ))}
         <XAxis

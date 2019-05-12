@@ -12,8 +12,12 @@ import {
   gt,
   tap,
   propSatisfies,
-  both
+  both,
+  curry,
+  sort
 } from 'ramda'
+
+const peek = tap(x => console.log(x))
 
 const inRange = ifElse(
   gte,
@@ -42,10 +46,17 @@ const scalePoint = (xScale, yScale) =>
 
 const pred = ({ left, right, top, bottom }) =>
   where({
-    x: inRange(left, right + 0.001),
-    y: inRange(bottom, top + 0.001)
+    x: compose(inRange(...(sort([left, right]) + 0.001), prop('x'))),
+    y: compose(
+      inRange(...(sort([bottom, top]) + 0.001)),
+      prop('y')
+    )
   })
-const isInside = ({ left, right, top, bottom }) =>
-  both(propSatisfies(inRange(left, right)), propSatisfies(bottom, top))
+const isInside = ({ left, right, top, bottom, x, y }) => {
+  return both(
+    inRange(...sort((a, b) => a - b, [left, right + right * 0.001]), x),
+    inRange(...sort((a, b) => a - b, [bottom, top + 0.0001]), y)
+  )
+}
 
-export { pred, isInside }
+export { pred, isInside, inRange }

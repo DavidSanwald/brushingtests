@@ -5,7 +5,6 @@ import { pick } from 'ramda'
 const Circle = ({ x, y, size, fill }) => {
   const [springProps, set] = useSpring(() => ({ cx: x, cy: y, r: size / 2 }))
   set({ cx: x, cy: y, r: size / 2 })
-  console.log(fill)
 
   return <animated.circle fill={fill} {...springProps} />
 }
