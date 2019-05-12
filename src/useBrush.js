@@ -1,16 +1,34 @@
 import React, { useReducer, useState, useEffect } from 'react'
 import { pred, isInside, inRange } from './helpers'
-import { not, compose, sort, cond, equals, always, or } from 'ramda'
+import {
+  not,
+  compose,
+  sort,
+  cond,
+  equals,
+  always,
+  or,
+  anyPass,
+  identity
+} from 'ramda'
 const initBrush = ({ x, y }) => ({
   left: x,
   right: x,
   top: y,
   bottom: y
 })
-const computeNextStatus = cond([
-  [or(equals('brushStart'), equals('brushing')), always('brushing')],
-  [or(equals('dragStart'), equals('dragging')), always('dragging')][
-    (equals('idle'), always('idle'))
+const onMoveChange = cond([
+  [equals('brushStart'), always('brushing')],
+  [equals('dragStart'), always('dragging')],
+  [
+    anyPass([
+      equals('idle'),
+      equals('dragging'),
+      equals('dragEnd'),
+      equals('brushEnd'),
+      equals('brushing')
+    ]),
+    identity
   ]
 ])
 const computeBrushArea = ({ startLocX, startLocY, x, y }) => {
@@ -45,6 +63,7 @@ const dragReducer = (state, action) => {
       const isInsideX = xRange[0] < x && x < xRange[1] + 0.00001
       const isInsideY = yRange[0] < y && y < yRange[1] + 0.00001
       const isOutSideAreaClick = !isInsideX || !isInsideY
+      console.log(isOutSideAreaClick)
       let newStatus = isOutSideAreaClick ? 'brushStart' : 'dragStart'
 
       return {
@@ -58,30 +77,29 @@ const dragReducer = (state, action) => {
         dragArea: isOutSideAreaClick ? null : state.area
       }
     case 'onMouseMove':
-      console.log(state.currentStatus)
-
-      const nextStatus = computeNextStatus(state.currentStatus)
+      const nextStatus = onMoveChange(state.currentStatus)
       return {
         ...state,
         area:
-          state.currentStatus === 'brushStart'
+          state.currentStatus === 'brushing'
             ? computeBrushArea({
-              startLocX: state.startLocX,
-              startLocY: state.startLocY,
-              x,
-              y,
-              area: state.area
-            })
+                startLocX: state.startLocX,
+                startLocY: state.startLocY,
+                x,
+                y,
+                area: state.area
+              })
             : state.area,
         dragArea:
-          state.dragArea && state.currentStatus === 'dragStart'
+          (state.dragArea && state.currentStatus === 'dragging') ||
+          state.currentStatus === 'dragStart'
             ? computeDragArea({
-              x,
-              y,
-              startLocX: state.startLocX,
-              startLocY: state.startLocY,
-              dragArea: state.area
-            })
+                x,
+                y,
+                startLocX: state.startLocX,
+                startLocY: state.startLocY,
+                dragArea: state.area
+              })
             : null,
         currentStatus: nextStatus
       }
@@ -93,8 +111,17 @@ const dragReducer = (state, action) => {
           state.currentStatus === 'dragging'
             ? 'dragEnd'
             : state.currentStatus === 'brushing'
-              ? 'brushEnd'
-              : state.currentStatus
+            ? 'brushEnd'
+            : state.currentStatus
+      }
+    case 'onMouseLeave':
+      return {
+        ...state,
+        currentStatus: cond([
+          [or(equals('brushEnd'), equals('dragEnd')), identity],
+          [equals('brushing'), always('brushEnd')],
+          [equals('dragging'), always('dragend')]
+        ])(state.currentStatus)
       }
     default:
       throw new Error()
