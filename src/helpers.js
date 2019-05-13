@@ -16,6 +16,16 @@ import {
   curry,
   sort
 } from 'ramda'
+const isInside = curry((area, point) => {
+  const { top, left, right, bottom } = area
+  const { x, y } = point
+  const xRange = sort((a, b) => a - b, [left, right])
+  const yRange = sort((a, b) => a - b, [top, bottom])
+
+  const isInsideX = xRange[0] < x && x < xRange[1] + 0.00001
+  const isInsideY = yRange[0] < y && y < yRange[1] + 0.00001
+  return !isInsideX || !isInsideY
+})
 
 const peek = tap(x => console.log(x))
 
@@ -52,11 +62,4 @@ const pred = ({ left, right, top, bottom }) =>
       prop('y')
     )
   })
-const isInside = ({ left, right, top, bottom, x, y }) => {
-  return both(
-    inRange(...sort((a, b) => a - b, [left, right + right * 0.001]), x),
-    inRange(...sort((a, b) => a - b, [bottom, top + 0.0001]), y)
-  )
-}
-
 export { pred, isInside, inRange }

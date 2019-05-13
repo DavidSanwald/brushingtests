@@ -26,6 +26,7 @@ import {
   gt,
   tap
 } from 'ramda'
+import { isInside } from './helpers'
 import { getRandomColor, colors } from './colors'
 import { pred } from './helpers'
 import { getData } from './dataGens'
@@ -103,11 +104,15 @@ function App() {
       prop('right')
     )
   })
+  const scalePoint = useMemo(
+    () => (xScale, yScale) => applySpec({ x: xScale.invert, y: yScale.invert }),
+    [xScale, yScale]
+  )
   const [state, events] = useBrush('drag')
   const { area, dragArea } = state
   const rectArea = state.currentStatus === 'dragging' ? dragArea : area
-  console.log(rectArea)
   const { top, bottom, left, right } = rectArea
+  const isHighlighted = isInside(rectArea)
 
   return (
     <svg width={width} height={height} pointerEvents="none">
@@ -133,7 +138,7 @@ function App() {
           width={Math.max(0, right - left)}
           height={Math.max(0, bottom - top)}
           pointerEvents="none"
-          fill={'none'}
+          fill="red"
           stroke="red"
           opacity={0.8}
         />
@@ -144,7 +149,16 @@ function App() {
             y={yScale(datum.y)}
             size={45}
             opacity={0.8}
-            fill={pred(scaleArea(state.area))(datum) ? 'black' : 'blue'}
+            fill={
+              peek(
+                isHighlighted({
+                  x: xScale(datum.x),
+                  y: yScale(datum.y)
+                })
+              )
+                ? 'red'
+                : 'blue'
+            }
             stroke="white"
             strokeWidth="2px"
           />
