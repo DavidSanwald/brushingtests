@@ -14,6 +14,7 @@ import { keyExtent, useExtent } from './transformationHelpers'
 import {
   compose,
   prop,
+  assoc,
   applySpec,
   evolve,
   useWith,
@@ -70,10 +71,15 @@ const useData = (generator, number = 20) => {
   const genData = () => setData(generator(number, Math.random()))
   return [data, genData]
 }
-const data = getData(3, Math.random())
+const data = getData(100, Math.random()).map(datum => ({
+  ...datum,
+  color: getRandomColor(),
+  size: Math.random() * 70
+}))
+console.log(data)
 const chance1 = chance('1234')
 
-function App() {
+function App () {
   const eventRef = useRef('')
   const { margin, innerHeight, innerWidth } = useDims(width, height)
   const xExtent = useExtent('x', data)
@@ -115,12 +121,12 @@ function App() {
   const isHighlighted = isInside(rectArea)
 
   return (
-    <svg width={width} height={height} pointerEvents="none">
+    <svg width={width} height={height} pointerEvents='none'>
       <Group top={margin.top} left={margin.left}>
         <rect
-          pointerEvents="all"
-          fill="black"
-          opacity="0"
+          pointerEvents='all'
+          fill='black'
+          opacity='0'
           height={innerHeight}
           width={innerWidth}
           ref={eventRef}
@@ -132,37 +138,24 @@ function App() {
           }
           onMouseUp={e => events.onMouseUp()}
         />
-        <rect
-          x={left}
-          y={top}
-          width={Math.max(0, right - left)}
-          height={Math.max(0, bottom - top)}
-          pointerEvents="none"
-          fill="red"
-          stroke="red"
-          opacity={0.8}
-        />
-        {data.map((datum, i) => (
-          <Circle
-            key={i}
-            x={xScale(datum.x)}
-            y={yScale(datum.y)}
-            size={45}
-            opacity={0.8}
-            fill={
-              peek(
-                isHighlighted({
-                  x: xScale(datum.x),
-                  y: yScale(datum.y)
-                })
-              )
-                ? 'red'
-                : 'blue'
-            }
-            stroke="white"
-            strokeWidth="2px"
-          />
-        ))}
+        {data.map((datum, i) => {
+          const doHighlight = isHighlighted({
+            x: xScale(datum.x),
+            y: yScale(datum.y)
+          })
+          return (
+            <Circle
+              key={i}
+              x={xScale(datum.x)}
+              y={yScale(datum.y)}
+              size={doHighlight ? datum.size / 4 : datum.size}
+              fillOpacity={doHighlight ? 0.2 : 0.6}
+              fill={doHighlight ? 'black' : datum.color}
+              stroke='black'
+              strokeWidth='2px'
+            />
+          )
+        })}
         <XAxis
           xScale={xScale}
           innerWidth={innerWidth}
@@ -174,6 +167,16 @@ function App() {
           innerWidth={innerWidth}
           innerHeight={innerHeight}
           margin={margin}
+        />
+        <rect
+          x={left}
+          y={top}
+          width={Math.min(Math.max(0, right - left), innerWidth)}
+          height={Math.min(Math.max(0, bottom - top), innerHeight)}
+          pointerEvents='none'
+          fill='black'
+          stroke='black'
+          fillOpacity={0.02}
         />
       </Group>
     </svg>

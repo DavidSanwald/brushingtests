@@ -26,15 +26,8 @@ const computeBrushArea = ({ startLocX, startLocY, x, y }) => {
     top: Math.min(startLocY, y)
   }
 }
-const computeDragArea = ({ x, y, startLocX, startLocY, dragArea }) => {
-  return {
-    bottom: dragArea.bottom + (y - startLocY),
-    left: dragArea.left + (x - startLocX),
-    right: dragArea.right + (x - startLocX),
-    top: dragArea.top + (y - startLocY)
-  }
-}
-const dragReducer = (state, action) => {
+
+const brushReducer = (state, action) => {
   const {
     payload: { x, y },
     type
@@ -44,79 +37,56 @@ const dragReducer = (state, action) => {
       const {
         area: { left, right, top, bottom }
       } = state
-      const isOutSideAreaClick = isInside(state.area, { x, y })
-
-      let newStatus = isOutSideAreaClick ? 'brushStart' : 'dragStart'
 
       return {
         ...state,
         startLocX: x,
         startLocY: y,
-        currentStatus: newStatus,
-        area: isOutSideAreaClick ? initBrush({ x, y }) : state.area,
-        dragArea: isOutSideAreaClick ? null : state.area
+        currentStatus: 'brushStart'
       }
     case 'onMouseMove':
-      const nextStatus = onMoveChange(state.currentStatus)
       return {
         ...state,
         area:
           state.currentStatus === 'brushing'
             ? computeBrushArea({
-              startLocX: state.startLocX,
-              startLocY: state.startLocY,
-              x,
-              y,
-              area: state.area
-            })
-            : state.area,
-        dragArea:
-          (state.dragArea && state.currentStatus === 'dragging') ||
-          state.currentStatus === 'dragStart'
-            ? computeDragArea({
-              x,
-              y,
-              startLocX: state.startLocX,
-              startLocY: state.startLocY,
-              dragArea: state.area
-            })
-            : null,
-        currentStatus: nextStatus
+                startLocX: state.startLocX,
+                startLocY: state.startLocY,
+                x,
+                y,
+                area: state.area
+              })
+            : { top: 0, bottom: 0, right: 0, left: 0 },
+        currentStatus:
+          state.currentStatus === 'brushStart'
+            ? 'brushing'
+            : state.currentStatus
       }
     case 'onMouseUp':
       return {
         ...state,
-        area: state.currentStatus === 'dragging' ? state.dragArea : state.area,
-        currentStatus:
-          state.currentStatus === 'dragging'
-            ? 'dragEnd'
-            : state.currentStatus === 'brushing'
-              ? 'brushEnd'
-              : state.currentStatus
+        area: { top: 0, bottom: 0, left: 0, right: 0 },
+        currentStatus: 'brushEnd'
       }
     case 'onMouseLeave':
       return {
         ...state,
-        currentStatus: cond([
-          [or(equals('brushEnd'), equals('dragEnd')), identity],
-          [equals('brushing'), always('brushEnd')],
-          [equals('dragging'), always('dragend')]
-        ])(state.currentStatus)
+        area: { top: 0, bottom: 0, left: 0, right: 0 },
+        currentStatus: 'brushEnd'
       }
     default:
       throw new Error()
   }
 }
-const initState = mode => ({
+const initState = () => ({
   area: { top: 0, right: 0, bottom: 0, left: 0 },
-  dragArea: false,
   startLocX: 0,
   startLocY: 0,
-  currentStatus: 'idle'
+  currentStatus: 'brushEnd'
 })
 
-const useBrush = (mode = 'drag') => {
-  const [state, dispatch] = useReducer(dragReducer, initState(mode))
+const useBrush = () => {
+  const [state, dispatch] = useReducer(brushReducer, initState())
   const onMouseUp = () => dispatch({ type: 'onMouseUp', payload: {} })
   const onMouseMove = ({ x, y }) =>
     dispatch({ type: 'onMouseMove', payload: { x, y } })

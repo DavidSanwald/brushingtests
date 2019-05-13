@@ -1,9 +1,9 @@
 import React, { useMemo, memo } from 'react'
 import { AxisBottom } from '@vx/axis'
 
-function numTicksForWidth(width) {
+function numTicksForWidth (width) {
   if (width <= 300) return 2
-  if (300 < width && width <= 400) return 5
+  if (width > 300 && width <= 400) return 5
   return 10
 }
 export const getAxisStyles = () => {
@@ -56,4 +56,4 @@ const XAxis = ({ xScale, innerWidth, innerHeight, margin }) => {
   )
 }
 
-export default XAxis
+export default memo(XAxis)

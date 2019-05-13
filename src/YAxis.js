@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { AxisLeft } from '@vx/axis'
 
 function numTicksForHeight(height) {
   if (height <= 300) return 3
-  if (300 < height && height <= 600) return 5
+  if (height > 300 && height <= 600) return 5
   return 10
 }
 
@@ -40,4 +40,4 @@ const YAxis = ({ yScale, innerWidth, innerHeight, ...restProps }) => {
   )
 }
 
-export default YAxis
+export default memo(YAxis)
