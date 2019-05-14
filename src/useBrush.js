@@ -50,12 +50,12 @@ const brushReducer = (state, action) => {
         area:
           state.currentStatus === 'brushing'
             ? computeBrushArea({
-                startLocX: state.startLocX,
-                startLocY: state.startLocY,
-                x,
-                y,
-                area: state.area
-              })
+              startLocX: state.startLocX,
+              startLocY: state.startLocY,
+              x,
+              y,
+              area: state.area
+            })
             : { top: 0, bottom: 0, right: 0, left: 0 },
         currentStatus:
           state.currentStatus === 'brushStart'
@@ -65,13 +65,11 @@ const brushReducer = (state, action) => {
     case 'onMouseUp':
       return {
         ...state,
-        area: { top: 0, bottom: 0, left: 0, right: 0 },
         currentStatus: 'brushEnd'
       }
     case 'onMouseLeave':
       return {
         ...state,
-        area: { top: 0, bottom: 0, left: 0, right: 0 },
         currentStatus: 'brushEnd'
       }
     default:
@@ -82,7 +80,7 @@ const initState = () => ({
   area: { top: 0, right: 0, bottom: 0, left: 0 },
   startLocX: 0,
   startLocY: 0,
-  currentStatus: 'brushEnd'
+  currentStatus: 'idle'
 })
 
 const useBrush = () => {
@@ -95,7 +93,7 @@ const useBrush = () => {
   }
   const onMouseLeave = ({ x, y }) =>
     dispatch({ type: 'onMouseLeave', payload: {} })
-  const { area } = state
-  return [state, { onMouseDown, onMouseUp, onMouseMove }]
+  const { area, currentStatus } = state
+  return [area, currentStatus, { onMouseDown, onMouseUp, onMouseMove }]
 }
 export default useBrush

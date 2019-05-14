@@ -1,6 +1,11 @@
 import { scaleLinear } from 'd3-scale'
-import { useMemo } from 'react'
 
+const padDomain = domain => {
+  const [lower, upper] = domain
+  const diff = upper - lower
+  const pad = diff * 0.05
+  return [lower - pad, upper + pad]
+}
 const linear = ({ range, rangeRound, domain, nice = false, clamp = false }) => {
   const scale = scaleLinear()
   scale.type = 'linear'
@@ -14,4 +19,4 @@ const linear = ({ range, rangeRound, domain, nice = false, clamp = false }) => {
   return scale
 }
 
-export { linear }
+export { linear, padDomain }
