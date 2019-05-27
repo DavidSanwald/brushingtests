@@ -1,16 +1,5 @@
 import { useMemo } from 'react'
-import {
-  pluck,
-  flip,
-  contains,
-  apply,
-  juxt,
-  path,
-  compose,
-  __,
-  applySpec,
-  prop
-} from 'ramda'
+import { pluck, apply, juxt, compose } from 'ramda'
 
 const extent = apply(juxt([Math.min, Math.max]))
 

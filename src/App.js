@@ -30,20 +30,15 @@ import {
 import { isInside } from './helpers'
 import { getRandomColor, colors } from './colors'
 import { pred } from './helpers'
-import { getData } from './dataGens'
-import generateStreamData from './streamGraphData'
+import { getData } from './data/dataGens'
+import generateStreamData from './data/streamGraphData'
 import useBrush from './useBrush'
 import localPoint from './localPoint'
-import XAxis from './XAxis.js'
-import YAxis from './YAxis.js'
+import XAxis from './Axis/XAxis'
+import YAxis from './Axis/YAxis'
 import Circle from './Circle'
 import chance from 'chance'
 import { stack, area } from 'd3-shape'
-const streamData = generateStreamData()
-console.log(streamData)
-const myStack = stack().order('reverse')
-const series = myStack(streamData)
-console.log(series)
 
 const myArea = area()
   .x(d => d.date)
