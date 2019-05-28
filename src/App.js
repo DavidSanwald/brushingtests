@@ -1,49 +1,20 @@
-import React, {
-  useState,
-  useReducer,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo
-} from 'react'
-import { linear, time } from './scales'
+import React, { useState, useRef, useMemo } from 'react'
+import { Flipper, Flipped } from 'react-flip-toolkit'
+import { linear } from './scales'
 import Group from './Group'
 import useDims from './useDims'
-import { keyExtent, useExtent } from './transformationHelpers'
-import {
-  compose,
-  prop,
-  assoc,
-  applySpec,
-  evolve,
-  useWith,
-  lte,
-  map,
-  where,
-  ifElse,
-  gte,
-  both,
-  gt,
-  tap,
-  pluck
-} from 'ramda'
+import { useExtent } from './transformationHelpers'
+import { compose, prop, applySpec, evolve } from 'ramda'
 import { isInside } from './helpers'
 import { getRandomColor, colors } from './colors'
 import { pred } from './helpers'
 import { getData } from './data/dataGens'
-import generateStreamData from './data/streamGraphData'
 import useBrush from './useBrush'
 import localPoint from './localPoint'
 import XAxis from './Axis/XAxis'
 import YAxis from './Axis/YAxis'
 import Circle from './Circle'
 import chance from 'chance'
-import { stack, area } from 'd3-shape'
-
-const myArea = area()
-  .x(d => d.date)
-  .y0(d => 0)
-  .y1(d => d.count)
 
 const width = 900
 const height = 600
@@ -84,7 +55,7 @@ const data = getData(100, Math.random()).map(datum => ({
 console.log(data)
 const chance1 = chance('1234')
 
-function App() {
+function App () {
   const eventRef = useRef('')
   const { margin, innerHeight, innerWidth } = useDims(width, height)
   const xExtent = useExtent('x', data)
@@ -126,12 +97,12 @@ function App() {
   const isHighlighted = isInside(rectArea)
 
   return (
-    <svg width={width} height={height} pointerEvents="none">
+    <svg width={width} height={height} pointerEvents='none'>
       <Group top={margin.top} left={margin.left}>
         <rect
-          pointerEvents="all"
-          fill="black"
-          opacity="0"
+          pointerEvents='all'
+          fill='black'
+          opacity='0'
           height={innerHeight}
           width={innerWidth}
           ref={eventRef}
@@ -156,8 +127,8 @@ function App() {
               size={doHighlight ? datum.size / 4 : datum.size}
               fillOpacity={doHighlight ? 0.2 : 0.6}
               fill={doHighlight ? 'black' : datum.color}
-              stroke="black"
-              strokeWidth="2px"
+              stroke='black'
+              strokeWidth='2px'
             />
           )
         })}
@@ -178,9 +149,9 @@ function App() {
           y={top}
           width={Math.min(Math.max(0, right - left), innerWidth)}
           height={Math.min(Math.max(0, bottom - top), innerHeight)}
-          pointerEvents="none"
-          fill="black"
-          stroke="black"
+          pointerEvents='none'
+          fill='black'
+          stroke='black'
           fillOpacity={0.02}
         />
       </Group>
