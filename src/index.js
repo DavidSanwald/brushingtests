@@ -1,5 +1,21 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import App from './App'
+import { createGlobalStyle } from 'styled-components'
 
-ReactDOM.render(<App />, document.getElementById('root'))
+const GlobalStyle = createGlobalStyle`
+  body {
+    height: 100vh;
+  }
+  #root {
+    height: 100%;
+  }
+`
+
+ReactDOM.render(
+  <>
+    <GlobalStyle />
+    <App />
+  </>,
+  document.getElementById('root')
+)
