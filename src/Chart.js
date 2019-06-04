@@ -173,9 +173,7 @@ function Chart ({ data }) {
           </svg>
         </Card>
       </Box>
-      <Flex p={4} ml='auto' width={[1 / 4]} minHeight={[900]}>
-        <Bars data={highlightedData} />
-      </Flex>
+      <Flex p={4} ml='auto' width={[1 / 4]} minHeight={[900]} />
     </Flex>
   )
 }
